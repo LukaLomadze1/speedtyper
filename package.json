@@ -1,0 +1,9 @@
+{
+  "name": "speedtyper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A minimalist typing test for measuring words per minute and accuracy.",
+  "scripts": {
+    "test": "node --test"
+  }
+}

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SpeedTyper</title>
+  <meta name="description" content="A minimalist typing test for measuring words per minute and accuracy.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23131416'/%3E%3Crect x='14' y='6' width='4' height='20' rx='2' fill='%23f0b429'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-phase="ready">
+  <div class="page">
+    <header class="top fades">
+      <h1 class="brand">SpeedTyper</h1>
+      <div class="durations" role="group" aria-label="Test length">
+        <button type="button" class="duration" data-seconds="15" aria-pressed="false">15s</button>
+        <button type="button" class="duration" data-seconds="30" aria-pressed="false">30s</button>
+        <button type="button" class="duration" data-seconds="60" aria-pressed="false">60s</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="test-view" class="stage" aria-label="Typing test">
+        <dl class="stats">
+          <div class="stat"><dt>Time</dt><dd id="stat-time">30</dd></div>
+          <div class="stat"><dt>WPM</dt><dd id="stat-wpm">–</dd></div>
+          <div class="stat"><dt>Accuracy</dt><dd id="stat-accuracy">–</dd></div>
+        </dl>
+
+        <div class="text-window">
+          <div id="text-track" class="text-track" aria-hidden="true"></div>
+          <!-- Keeps a text field focused so touch devices open their on-screen keyboard. -->
+          <input id="typing-input" class="typing-input" type="text" aria-label="Type the text shown here"
+                 autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+        </div>
+
+        <div class="below">
+          <p class="hint">
+            <span id="caps-notice" class="caps-notice" hidden>Caps Lock is on</span>
+            <span class="fades">The timer starts on your first keystroke. <kbd>Esc</kbd> restarts.</span>
+          </p>
+          <button type="button" id="restart" class="button fades">Restart</button>
+        </div>
+      </section>
+
+      <section id="result-view" class="stage" aria-labelledby="result-title" hidden>
+        <h2 id="result-title" class="result-title" tabindex="-1">
+          <span id="result-wpm">0</span> <span class="result-unit">WPM</span>
+        </h2>
+        <p id="result-best" class="result-best"></p>
+
+        <dl class="stats stats-small">
+          <div class="stat"><dt>Accuracy</dt><dd id="result-accuracy">–</dd></div>
+          <div class="stat"><dt>Raw WPM</dt><dd id="result-raw">–</dd></div>
+          <div class="stat"><dt>Errors</dt><dd id="result-errors">–</dd></div>
+          <div class="stat"><dt>Test</dt><dd id="result-length">–</dd></div>
+        </dl>
+
+        <div class="below">
+          <p class="hint">WPM counts correct characters ÷ 5. Accuracy and raw WPM count every keystroke, including ones you corrected.</p>
+          <button type="button" id="next-test" class="button button-primary">Next test <kbd>Enter</kbd></button>
+        </div>
+      </section>
+
+      <section class="history fades" aria-labelledby="history-title">
+        <div class="history-head">
+          <h2 id="history-title">History</h2>
+          <p id="history-best" class="history-best"></p>
+          <button type="button" id="clear-history" class="link-button" hidden>Clear</button>
+        </div>
+        <p id="history-empty" class="history-note">Your scores will appear here after your first test.</p>
+        <p id="storage-warning" class="history-note" hidden>This browser is blocking local storage, so scores will be lost when you close the page.</p>
+        <div id="history-scroll" class="history-scroll" hidden>
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th scope="col">When</th>
+                <th scope="col" class="num">Test</th>
+                <th scope="col" class="num">WPM</th>
+                <th scope="col" class="num">Accuracy</th>
+              </tr>
+            </thead>
+            <tbody id="history-rows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="src/words.js"></script>
+  <script src="src/engine.js"></script>
+  <script src="src/app.js"></script>
+</body>
+</html>
