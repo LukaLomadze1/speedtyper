@@ -5,6 +5,8 @@ const MAX_CHARS_PER_SECOND = 35;
 const TICK_MS = 100;
 const HISTORY_KEY = "speedtyper.history.v1";
 const DURATION_KEY = "speedtyper.duration";
+const DEVELOPER_MODE_KEY = "speedtyper.developerMode";
+const LANGUAGE_KEY = "speedtyper.language";
 const HISTORY_LIMIT = 100;
 // The input always holds one character so that Backspace on a touch keyboard
 // has something to delete. Without it, no input event fires.
@@ -14,6 +16,8 @@ const byId = (id) => document.getElementById(id);
 
 const els = {
   durationButtons: [...document.querySelectorAll(".duration")],
+  developerToggle: byId("developer-toggle"),
+  languages: byId("languages"),
   testView: byId("test-view"),
   resultView: byId("result-view"),
   time: byId("stat-time"),
@@ -40,6 +44,8 @@ const els = {
 };
 
 let duration = loadDuration();
+let developerMode = readStorage(DEVELOPER_MODE_KEY) === "true";
+let selectedLanguage = loadLanguage();
 let history = loadHistory();
 let test = null;
 let timerId = null;
@@ -74,10 +80,25 @@ function loadDuration() {
   return DURATIONS.includes(saved) ? saved : DEFAULT_DURATION;
 }
 
+function findLanguage(id) {
+  return LANGUAGES.find((language) => language.id === id);
+}
+
+function loadLanguage() {
+  const saved = readStorage(LANGUAGE_KEY);
+  return findLanguage(saved) ? saved : LANGUAGES[0].id;
+}
+
+// Undefined outside developer mode, which also keeps the key out of saved scores.
+function activeLanguage() {
+  return developerMode ? selectedLanguage : undefined;
+}
+
 function isValidEntry(entry) {
   return (
     entry &&
     DURATIONS.includes(entry.seconds) &&
+    (entry.language === undefined || findLanguage(entry.language)) &&
     [entry.at, entry.wpm, entry.accuracy].every(Number.isFinite)
   );
 }
@@ -96,11 +117,20 @@ function saveHistory() {
   els.storageWarning.hidden = writeStorage(HISTORY_KEY, value);
 }
 
+// Code is slower to type than prose, so each language keeps its own bests.
 function bestWpm(seconds) {
   const scores = history
-    .filter((entry) => entry.seconds === seconds)
+    .filter(
+      (entry) =>
+        entry.seconds === seconds && entry.language === activeLanguage(),
+    )
     .map((entry) => entry.wpm);
   return scores.length > 0 ? Math.max(...scores) : null;
+}
+
+function testLabel(seconds, languageId) {
+  const language = findLanguage(languageId);
+  return language ? `${seconds}s ${language.name}` : `${seconds}s`;
 }
 
 /* Rendering */
@@ -114,6 +144,30 @@ function renderDurationButtons() {
     button.setAttribute(
       "aria-pressed",
       String(Number(button.dataset.seconds) === duration),
+    );
+  });
+}
+
+function renderLanguageButtons() {
+  const buttons = LANGUAGES.map(({ id, name }) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "language";
+    button.dataset.language = id;
+    button.textContent = name;
+    button.addEventListener("click", () => setLanguage(id));
+    return button;
+  });
+  els.languages.replaceChildren(...buttons);
+}
+
+function renderDeveloperMode() {
+  els.developerToggle.setAttribute("aria-pressed", String(developerMode));
+  els.languages.hidden = !developerMode;
+  [...els.languages.children].forEach((button) => {
+    button.setAttribute(
+      "aria-pressed",
+      String(button.dataset.language === selectedLanguage),
     );
   });
 }
@@ -181,7 +235,7 @@ function renderHistory() {
     const row = document.createElement("tr");
     const cells = [
       [formatDate(entry.at), ""],
-      [`${entry.seconds}s`, "num"],
+      [testLabel(entry.seconds, entry.language), "num"],
       [entry.wpm, "num wpm"],
       [`${entry.accuracy.toFixed(1)}%`, "num"],
     ];
@@ -199,8 +253,11 @@ function renderHistory() {
   els.historyEmpty.hidden = hasHistory;
   els.historyScroll.hidden = !hasHistory;
   els.clearHistory.hidden = !hasHistory;
+  const bestTitle = developerMode
+    ? `Best in ${findLanguage(selectedLanguage).name}`
+    : "Best";
   els.historyBest.textContent = hasHistory
-    ? `Best: ${DURATIONS.map((seconds) => `${seconds}s ${bestWpm(seconds) ?? "–"}`).join(" · ")}`
+    ? `${bestTitle}: ${DURATIONS.map((seconds) => `${seconds}s ${bestWpm(seconds) ?? "–"}`).join(" · ")}`
     : "";
 }
 
@@ -222,16 +279,17 @@ function renderResult(stats, previousBest) {
     stats.accuracy === null ? "–" : `${stats.accuracy.toFixed(1)}%`;
   els.resultRaw.textContent = Math.round(stats.rawWpm);
   els.resultErrors.textContent = stats.errors;
-  els.resultLength.textContent = `${duration}s`;
+  const label = testLabel(duration, activeLanguage());
+  els.resultLength.textContent = label;
 
   const isNewBest = previousBest !== null && wpm > previousBest;
   els.resultBest.classList.toggle("is-new", isNewBest);
   if (isNewBest)
-    els.resultBest.textContent = `New best for ${duration}s, up from ${previousBest} WPM`;
+    els.resultBest.textContent = `New best for ${label}, up from ${previousBest} WPM`;
   else if (previousBest === null)
-    els.resultBest.textContent = `Your first ${duration}s score`;
+    els.resultBest.textContent = `Your first ${label} score`;
   else
-    els.resultBest.textContent = `Your best for ${duration}s is ${previousBest} WPM`;
+    els.resultBest.textContent = `Your best for ${label} is ${previousBest} WPM`;
 }
 
 /* Test lifecycle */
@@ -253,7 +311,10 @@ function focusInput() {
 function startNewTest() {
   stopTimer();
   test = createTypingTest({
-    text: generateText(duration * MAX_CHARS_PER_SECOND),
+    text: generateText(
+      duration * MAX_CHARS_PER_SECOND,
+      findLanguage(activeLanguage())?.words,
+    ),
     durationMs: duration * 1000,
   });
   setPhase("ready");
@@ -274,6 +335,7 @@ function finishTest() {
     history.unshift({
       at: Date.now(),
       seconds: duration,
+      language: activeLanguage(),
       wpm: Math.round(stats.wpm),
       accuracy: stats.accuracy,
     });
@@ -313,6 +375,22 @@ function setDuration(seconds) {
   duration = seconds;
   writeStorage(DURATION_KEY, String(seconds));
   renderDurationButtons();
+  startNewTest();
+}
+
+function setDeveloperMode(enabled) {
+  developerMode = enabled;
+  writeStorage(DEVELOPER_MODE_KEY, String(enabled));
+  renderDeveloperMode();
+  renderHistory();
+  startNewTest();
+}
+
+function setLanguage(id) {
+  selectedLanguage = id;
+  writeStorage(LANGUAGE_KEY, id);
+  renderDeveloperMode();
+  renderHistory();
   startNewTest();
 }
 
@@ -409,6 +487,9 @@ els.durationButtons.forEach((button) => {
     setDuration(Number(button.dataset.seconds)),
   );
 });
+els.developerToggle.addEventListener("click", () =>
+  setDeveloperMode(!developerMode),
+);
 els.restart.addEventListener("click", startNewTest);
 els.nextTest.addEventListener("click", startNewTest);
 
@@ -430,5 +511,7 @@ window.addEventListener("storage", (event) => {
 });
 
 renderDurationButtons();
+renderLanguageButtons();
+renderDeveloperMode();
 renderHistory();
 startNewTest();

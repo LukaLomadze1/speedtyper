@@ -33,11 +33,11 @@ const WORDS = [
   'serve', 'age', 'book', 'board', 'recent', 'sound', 'office', 'cut', 'step', 'class', 'true', 'history',
 ];
 
-function generateText(minLength, random = Math.random) {
+function generateText(minLength, words = WORDS, random = Math.random) {
   const picked = [];
   let length = 0;
   while (length < minLength) {
-    const word = WORDS[Math.floor(random() * WORDS.length)];
+    const word = words[Math.floor(random() * words.length)];
     if (word === picked[picked.length - 1]) continue;
     picked.push(word);
     length += word.length + 1;

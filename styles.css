@@ -43,6 +43,8 @@ body {
   font-family: var(--mono);
   font-size: 1rem;
   line-height: 1.5;
+  /* Coding fonts would merge => and != into one glyph, hiding what to type. */
+  font-variant-ligatures: none;
 }
 
 h1, h2, p, dl, dd { margin: 0; }
@@ -100,9 +102,23 @@ body[data-phase="running"] .fades:not(:hover):not(:focus-within) { opacity: 0.2;
   vertical-align: -0.17em;
 }
 
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1rem;
+}
+
 .durations { display: flex; gap: 0.25rem; }
 
-.duration {
+.languages {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.duration, .developer-toggle, .language {
   min-width: 3rem;
   min-height: 2.25rem;
   padding: 0.25rem 0.6rem;
@@ -113,11 +129,17 @@ body[data-phase="running"] .fades:not(:hover):not(:focus-within) { opacity: 0.2;
   cursor: pointer;
 }
 
-.duration:hover { color: var(--ink); }
+.duration:hover, .developer-toggle:hover, .language:hover { color: var(--ink); }
 
-.duration[aria-pressed="true"] {
+.duration[aria-pressed="true"], .language[aria-pressed="true"] {
   border-color: var(--line);
   color: var(--ink);
+  font-weight: 700;
+}
+
+.developer-toggle[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
   font-weight: 700;
 }
 

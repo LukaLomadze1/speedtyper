@@ -12,11 +12,15 @@
   <div class="page">
     <header class="top fades">
       <h1 class="brand">SpeedTyper</h1>
-      <div class="durations" role="group" aria-label="Test length">
-        <button type="button" class="duration" data-seconds="15" aria-pressed="false">15s</button>
-        <button type="button" class="duration" data-seconds="30" aria-pressed="false">30s</button>
-        <button type="button" class="duration" data-seconds="60" aria-pressed="false">60s</button>
+      <div class="controls">
+        <div class="durations" role="group" aria-label="Test length">
+          <button type="button" class="duration" data-seconds="15" aria-pressed="false">15s</button>
+          <button type="button" class="duration" data-seconds="30" aria-pressed="false">30s</button>
+          <button type="button" class="duration" data-seconds="60" aria-pressed="false">60s</button>
+        </div>
+        <button type="button" id="developer-toggle" class="developer-toggle" aria-pressed="false">Developer</button>
       </div>
+      <div id="languages" class="languages" role="group" aria-label="Programming language" hidden></div>
     </header>
 
     <main>
@@ -88,6 +92,7 @@
   </div>
 
   <script src="src/words.js"></script>
+  <script src="src/languages.js"></script>
   <script src="src/engine.js"></script>
   <script src="src/app.js"></script>
 </body>
